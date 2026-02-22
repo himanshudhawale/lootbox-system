@@ -3,7 +3,7 @@
  * Run with: node deploy-commands.js
  */
 
-const { REST, Routes, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 const config = require('./src/config');
 const { buildConfigSubcommandGroup } = require('./src/commands/lootbox-config');
 const { buildPrizeSubcommandGroup } = require('./src/commands/lootbox-prize');
@@ -12,8 +12,7 @@ const { buildBuyCommand } = require('./src/commands/buy');
 // --- /lootbox (admin umbrella command) ---
 const lootboxCommand = new SlashCommandBuilder()
   .setName('lootbox')
-  .setDescription('Lootbox bot admin commands')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+  .setDescription('Lootbox bot commands')
   .addSubcommandGroup(buildConfigSubcommandGroup())
   .addSubcommandGroup(buildPrizeSubcommandGroup())
   .addSubcommand((sub) =>
@@ -21,6 +20,9 @@ const lootboxCommand = new SlashCommandBuilder()
   )
   .addSubcommand((sub) =>
     sub.setName('help').setDescription('Show all admin commands'),
+  )
+  .addSubcommand((sub) =>
+    sub.setName('stock').setDescription('View lootbox prizes, costs, and remaining stock'),
   );
 
 // --- /buy (user command) ---

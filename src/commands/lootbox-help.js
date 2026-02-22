@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 const { requireManageServer } = require('../utils/permissions');
 const { COLOUR_INFO } = require('../utils/constants');
 
@@ -66,7 +66,7 @@ async function handleHelp(interaction) {
     )
     .setTimestamp();
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 }
 
 module.exports = { handleHelp };

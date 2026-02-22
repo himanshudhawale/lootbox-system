@@ -1,3 +1,4 @@
+const { MessageFlags } = require('discord.js');
 const { requireManageServer } = require('../utils/permissions');
 const { deleteGuildConfig } = require('../db/guildConfig');
 const { deleteAllRolePrizes } = require('../db/rolePrizes');
@@ -12,7 +13,7 @@ async function handleReset(interaction) {
 
   const guildId = interaction.guildId;
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   await Promise.all([
     deleteGuildConfig(guildId),

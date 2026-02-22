@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Events } = require('discord.js');
+const { Client, GatewayIntentBits, Events, MessageFlags } = require('discord.js');
 const config = require('./config');
 const { initCosmos } = require('./db/cosmos');
 const { initUnbelievaBoat } = require('./services/unbelievaboat');
@@ -47,12 +47,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
       } else if (sub === 'help') {
         await handleHelp(interaction);
       } else {
-        await interaction.reply({ content: '❓ Unknown subcommand.', ephemeral: true });
+        await interaction.reply({ content: '❓ Unknown subcommand.', flags: MessageFlags.Ephemeral });
       }
     }
   } catch (err) {
     console.error('[Bot] Unhandled command error:', err);
-    const reply = { content: '❌ An unexpected error occurred.', ephemeral: true };
+    const reply = { content: '❌ An unexpected error occurred.', flags: MessageFlags.Ephemeral };
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(reply).catch(() => {});
     } else {

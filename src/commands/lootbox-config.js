@@ -1,8 +1,7 @@
-const { SlashCommandSubcommandGroupBuilder } = require('discord.js');
+const { SlashCommandSubcommandGroupBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { requireManageServer } = require('../utils/permissions');
 const { getGuildConfig, upsertGuildConfig } = require('../db/guildConfig');
 const { COLOUR_INFO } = require('../utils/constants');
-const { EmbedBuilder } = require('discord.js');
 
 /**
  * Build the "config" subcommand group for /lootbox.
@@ -97,7 +96,7 @@ async function handleConfig(interaction) {
     case 'price': {
       const amount = interaction.options.getInteger('amount');
       await upsertGuildConfig(guildId, { price: amount });
-      await interaction.reply({ content: `✅ Lootbox price set to **${amount.toLocaleString()}** coins.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Lootbox price set to **${amount.toLocaleString()}** coins.`, flags: MessageFlags.Ephemeral });
       break;
     }
 
@@ -105,11 +104,11 @@ async function handleConfig(interaction) {
       const min = interaction.options.getInteger('min');
       const max = interaction.options.getInteger('max');
       if (min > max) {
-        await interaction.reply({ content: '❌ Min must be ≤ Max.', ephemeral: true });
+        await interaction.reply({ content: '❌ Min must be ≤ Max.', flags: MessageFlags.Ephemeral });
         return;
       }
       await upsertGuildConfig(guildId, { winCoinMin: min, winCoinMax: max });
-      await interaction.reply({ content: `✅ Win coin range set to **${min.toLocaleString()}** – **${max.toLocaleString()}**.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Win coin range set to **${min.toLocaleString()}** – **${max.toLocaleString()}**.`, flags: MessageFlags.Ephemeral });
       break;
     }
 
@@ -117,32 +116,32 @@ async function handleConfig(interaction) {
       const min = interaction.options.getInteger('min');
       const max = interaction.options.getInteger('max');
       if (min > max) {
-        await interaction.reply({ content: '❌ Min must be ≤ Max (e.g. min: -500, max: 0).', ephemeral: true });
+        await interaction.reply({ content: '❌ Min must be ≤ Max (e.g. min: -500, max: 0).', flags: MessageFlags.Ephemeral });
         return;
       }
       await upsertGuildConfig(guildId, { lossCoinMin: min, lossCoinMax: max });
-      await interaction.reply({ content: `✅ Loss coin range set to **${min.toLocaleString()}** – **${max.toLocaleString()}**.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Loss coin range set to **${min.toLocaleString()}** – **${max.toLocaleString()}**.`, flags: MessageFlags.Ephemeral });
       break;
     }
 
     case 'cooldown': {
       const seconds = interaction.options.getInteger('seconds');
       await upsertGuildConfig(guildId, { cooldownSeconds: seconds });
-      await interaction.reply({ content: `✅ Cooldown set to **${seconds}** seconds.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Cooldown set to **${seconds}** seconds.`, flags: MessageFlags.Ephemeral });
       break;
     }
 
     case 'prize-channel': {
       const channel = interaction.options.getChannel('channel');
       await upsertGuildConfig(guildId, { prizeChannelId: channel.id });
-      await interaction.reply({ content: `✅ Prize channel set to <#${channel.id}>.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Prize channel set to <#${channel.id}>.`, flags: MessageFlags.Ephemeral });
       break;
     }
 
     case 'audit-channel': {
       const channel = interaction.options.getChannel('channel');
       await upsertGuildConfig(guildId, { auditChannelId: channel.id });
-      await interaction.reply({ content: `✅ Audit log channel set to <#${channel.id}>.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Audit log channel set to <#${channel.id}>.`, flags: MessageFlags.Ephemeral });
       break;
     }
 
@@ -152,14 +151,14 @@ async function handleConfig(interaction) {
       const msg = limit === 0
         ? '✅ Post-role purchase limit removed (unlimited).'
         : `✅ Post-role purchase limit set to **${limit}** per 24h.`;
-      await interaction.reply({ content: msg, ephemeral: true });
+      await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
       break;
     }
 
     case 'show': {
       const cfg = await getGuildConfig(guildId);
       if (!cfg) {
-        await interaction.reply({ content: '⚠️ No configuration found. Use `/lootbox config` subcommands to set up.', ephemeral: true });
+        await interaction.reply({ content: '⚠️ No configuration found. Use `/lootbox config` subcommands to set up.', flags: MessageFlags.Ephemeral });
         return;
       }
       const embed = new EmbedBuilder()
@@ -176,7 +175,7 @@ async function handleConfig(interaction) {
           { name: 'Post-Role Limit', value: cfg.purchaseLimitOverride != null ? `${cfg.purchaseLimitOverride}/24h` : 'Unlimited', inline: true },
         )
         .setTimestamp();
-      await interaction.reply({ embeds: [embed], ephemeral: true });
+      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       break;
     }
   }

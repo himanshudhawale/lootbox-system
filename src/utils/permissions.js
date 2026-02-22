@@ -1,10 +1,12 @@
-const { PermissionFlagsBits } = require('discord.js');
+const { PermissionFlagsBits, PermissionsBitField, MessageFlags } = require('discord.js');
 
 /**
  * Returns true if the member has Manage Guild permission.
  */
 function hasManageServer(interaction) {
-  return interaction.member.permissions.has(PermissionFlagsBits.ManageGuild);
+  // interaction.member.permissions may be a bitfield string in slash commands
+  const permissions = new PermissionsBitField(interaction.member.permissions);
+  return permissions.has(PermissionFlagsBits.ManageGuild);
 }
 
 /**
@@ -15,7 +17,7 @@ async function requireManageServer(interaction) {
   if (!hasManageServer(interaction)) {
     await interaction.reply({
       content: '❌ You need the **Manage Server** permission to use this command.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return false;
   }

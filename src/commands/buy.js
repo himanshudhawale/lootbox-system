@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { getGuildConfig } = require('../db/guildConfig');
 const { hasActiveRolePrizes } = require('../db/rolePrizes');
 const { getBoxesOpenedLast24h, recordPurchase } = require('../db/userPurchases');
@@ -40,7 +40,7 @@ async function handleBuy(interaction) {
   if (!cfg || cfg.price == null || cfg.winCoinMin == null || cfg.lossCoinMin == null) {
     await interaction.reply({
       content: '❌ Lootbox is not configured yet. Ask an admin to set up with `/lootbox config`.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -53,7 +53,7 @@ async function handleBuy(interaction) {
     const display = secs >= 120 ? `${mins} minute${mins !== 1 ? 's' : ''}` : `${secs} second${secs !== 1 ? 's' : ''}`;
     await interaction.reply({
       content: `⏳ You're on cooldown. Try again in **${display}**.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -73,7 +73,7 @@ async function handleBuy(interaction) {
     const remaining = Math.max(0, effectiveLimit - boxesLast24h);
     await interaction.reply({
       content: `❌ You can only open **${effectiveLimit}** boxes per 24h${rolesActive ? ' while role prizes are active' : ''}. You have **${remaining}** remaining.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -85,14 +85,14 @@ async function handleBuy(interaction) {
     balanceBefore = await getBalance(guildId, userId);
   } catch (err) {
     console.error('[Buy] Failed to get balance:', err.message);
-    await interaction.reply({ content: '❌ Failed to check your balance. Try again later.', ephemeral: true });
+    await interaction.reply({ content: '❌ Failed to check your balance. Try again later.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (balanceBefore < totalCost) {
     await interaction.reply({
       content: `❌ Insufficient funds. You need **${totalCost.toLocaleString()}** coins but only have **${balanceBefore.toLocaleString()}**.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }

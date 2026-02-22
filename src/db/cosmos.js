@@ -26,6 +26,8 @@ async function initCosmos() {
   database = db;
 
   // Create containers (partitioned by guildId for multi-server support)
+  // NOTE: Using Cosmos DB Serverless — no throughput provisioning needed.
+  // If using provisioned mode instead, uncomment the throughput line below.
   const containerDefs = [
     { id: CONTAINER_GUILD_CONFIG, partitionKey: '/guildId' },
     { id: CONTAINER_ROLE_PRIZES, partitionKey: '/guildId' },
@@ -37,6 +39,8 @@ async function initCosmos() {
     const { container } = await database.containers.createIfNotExists({
       id: def.id,
       partitionKey: { paths: [def.partitionKey] },
+      // Serverless: no throughput needed (pay-per-request)
+      // For provisioned mode, uncomment: throughput: 400,
     });
     containers[def.id] = container;
   }

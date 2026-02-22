@@ -7,6 +7,7 @@ const { getBalance, deductCost } = require('../services/unbelievaboat');
 const { openBoxes } = require('../services/lootbox');
 const { buildResultEmbed } = require('../embeds/resultEmbed');
 const { buildAuditEmbed } = require('../embeds/auditEmbed');
+const { playOpenAnimation } = require('../embeds/animation');
 const { DEFAULT_PURCHASE_LIMIT_ROLES_ACTIVE } = require('../utils/constants');
 
 /**
@@ -148,11 +149,13 @@ async function handleBuy(interaction) {
     console.error('[Buy] Failed to set cooldown:', err.message);
   }
 
-  // --- Build & send result embed (reply to user) ---
+  // --- Build result embed ---
   const resultEmbed = buildResultEmbed(
     interaction.user, amount, totalCost, netCoinChange, results, balanceAfter, purchasesLast24h,
   );
-  await interaction.editReply({ embeds: [resultEmbed] });
+
+  // --- Play opening animation then reveal final results ---
+  await playOpenAnimation(interaction, amount, results, resultEmbed);
 
   // --- Post to prize channel ---
   if (cfg.prizeChannelId) {

@@ -63,16 +63,16 @@ async function handleBuy(interaction) {
   const boxesLast24h = await getBoxesOpenedLast24h(guildId, userId);
 
   let effectiveLimit = null; // null = unlimited
-  if (rolesActive) {
-    effectiveLimit = DEFAULT_PURCHASE_LIMIT_ROLES_ACTIVE; // 5
-  } else if (cfg.purchaseLimitOverride != null) {
-    effectiveLimit = cfg.purchaseLimitOverride;
+  if (cfg.purchaseLimitOverride != null) {
+    effectiveLimit = cfg.purchaseLimitOverride; // admin override always wins
+  } else if (rolesActive) {
+    effectiveLimit = DEFAULT_PURCHASE_LIMIT_ROLES_ACTIVE; // default 5 when roles in stock
   }
 
   if (effectiveLimit != null && boxesLast24h + amount > effectiveLimit) {
     const remaining = Math.max(0, effectiveLimit - boxesLast24h);
     await interaction.reply({
-      content: `❌ You can only open **${effectiveLimit}** boxes per 24h${rolesActive ? ' while role prizes are active' : ''}. You have **${remaining}** remaining.`,
+      content: `❌ You can only open **${effectiveLimit}** boxes per 24h. You have **${remaining}** remaining.`,
       flags: MessageFlags.Ephemeral,
     });
     return;

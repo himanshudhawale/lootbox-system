@@ -52,10 +52,10 @@ async function handleStock(interaction) {
   // Purchase limit
   const hasActiveRoles = rolePrizes.some((r) => r.remainingWinners > 0);
   let limitText;
-  if (hasActiveRoles) {
-    limitText = `${DEFAULT_PURCHASE_LIMIT_ROLES_ACTIVE} per 24h (roles in stock)`;
-  } else if (cfg.purchaseLimitOverride != null) {
-    limitText = `${cfg.purchaseLimitOverride} per 24h`;
+  if (cfg.purchaseLimitOverride != null) {
+    limitText = `${cfg.purchaseLimitOverride} per 24h (admin override)`;
+  } else if (hasActiveRoles) {
+    limitText = `${DEFAULT_PURCHASE_LIMIT_ROLES_ACTIVE} per 24h (default · roles in stock)`;
   } else {
     limitText = 'Unlimited';
   }

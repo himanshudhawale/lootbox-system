@@ -33,8 +33,21 @@ async function openBox(guildId, userId, guildConfig, interaction) {
   // --- WIN ---
   const eligibleRoles = await getEligibleRolePrizes(guildId);
 
+  // Filter out roles the user already has (prevent duplicate role wins)
+  let member = null;
+  let availableRoles = eligibleRoles;
+  if (eligibleRoles.length > 0) {
+    try {
+      member = interaction.guild.members.cache.get(userId) ||
+        (await interaction.guild.members.fetch(userId));
+      availableRoles = eligibleRoles.filter((r) => !member.roles.cache.has(r.roleId));
+    } catch (err) {
+      console.error('[Lootbox] Failed to fetch member for role check:', err.message);
+    }
+  }
+
   let pickType = 'COINS';
-  if (eligibleRoles.length > 0 && Math.random() < ROLE_VS_COINS_CHANCE) {
+  if (availableRoles.length > 0 && Math.random() < ROLE_VS_COINS_CHANCE) {
     pickType = 'ROLE';
   }
 
@@ -45,7 +58,7 @@ async function openBox(guildId, userId, guildConfig, interaction) {
   }
 
   // --- WIN ROLE ---
-  const chosenRole = eligibleRoles[Math.floor(Math.random() * eligibleRoles.length)];
+  const chosenRole = availableRoles[Math.floor(Math.random() * availableRoles.length)];
   const updated = await decrementRolePrize(guildId, chosenRole.roleId);
 
   if (!updated) {
@@ -55,10 +68,12 @@ async function openBox(guildId, userId, guildConfig, interaction) {
     return { outcome: 'WIN_COINS', coins: coinResult };
   }
 
-  // Auto-assign role
+  // Auto-assign role (member already fetched above)
   try {
-    const member = interaction.guild.members.cache.get(userId) ||
-      (await interaction.guild.members.fetch(userId));
+    if (!member) {
+      member = interaction.guild.members.cache.get(userId) ||
+        (await interaction.guild.members.fetch(userId));
+    }
     await member.roles.add(chosenRole.roleId);
   } catch (err) {
     console.error(`[Lootbox] Failed to assign role ${chosenRole.roleId} to ${userId}:`, err.message);

@@ -1,0 +1,20 @@
+{
+  "name": "lootbox-bot",
+  "version": "1.0.0",
+  "description": "Discord lootbox gambling bot with UnbelievaBoat economy integration",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node deploy-commands.js"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.2.0",
+    "discord.js": "^14.16.0",
+    "dotenv": "^16.4.0",
+    "unb-api": "^2.1.0",
+    "uuid": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

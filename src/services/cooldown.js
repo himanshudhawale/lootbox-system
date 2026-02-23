@@ -1,36 +1,47 @@
 const { getContainer } = require('../db/cosmos');
 const { CONTAINER_USER_COOLDOWNS, DEFAULT_COOLDOWN_SECONDS } = require('../utils/constants');
 
-// In-memory cache for fast lookups (guildId:userId -> timestamp)
+// In-memory cache for fast lookups (guildId:userId -> { lastPurchase, adminUntil })
 const cooldownCache = new Map();
 
 /**
  * Check if a user is on cooldown. Returns { onCooldown, remainingMs }.
+ * Checks both normal purchase cooldown and admin-imposed cooldown.
  */
 async function checkCooldown(guildId, userId, cooldownSeconds) {
   const cd = cooldownSeconds ?? DEFAULT_COOLDOWN_SECONDS;
   const key = `${guildId}:${userId}`;
 
-  // Try cache first
-  let lastPurchase = cooldownCache.get(key);
+  let data = cooldownCache.get(key);
 
   // If not in cache, check Cosmos
-  if (lastPurchase === undefined) {
+  if (data === undefined) {
     const container = getContainer(CONTAINER_USER_COOLDOWNS);
     try {
       const { resource } = await container.item(userId, guildId).read();
-      lastPurchase = resource?.lastPurchaseTimestamp ?? 0;
-      cooldownCache.set(key, lastPurchase);
+      data = {
+        lastPurchase: resource?.lastPurchaseTimestamp ?? 0,
+        adminUntil: resource?.adminCooldownUntil ?? 0,
+      };
+      cooldownCache.set(key, data);
     } catch (err) {
       if (err.code === 404) {
-        lastPurchase = 0;
+        data = { lastPurchase: 0, adminUntil: 0 };
       } else {
         throw err;
       }
     }
   }
 
-  const elapsed = Date.now() - lastPurchase;
+  const now = Date.now();
+
+  // Admin cooldown takes priority
+  if (data.adminUntil > now) {
+    return { onCooldown: true, remainingMs: data.adminUntil - now };
+  }
+
+  // Normal cooldown
+  const elapsed = now - data.lastPurchase;
   const cooldownMs = cd * 1000;
 
   if (elapsed < cooldownMs) {
@@ -45,7 +56,9 @@ async function checkCooldown(guildId, userId, cooldownSeconds) {
 async function setCooldown(guildId, userId) {
   const key = `${guildId}:${userId}`;
   const now = Date.now();
-  cooldownCache.set(key, now);
+  const existing = cooldownCache.get(key) || { lastPurchase: 0, adminUntil: 0 };
+  existing.lastPurchase = now;
+  cooldownCache.set(key, existing);
 
   const container = getContainer(CONTAINER_USER_COOLDOWNS);
   await container.items.upsert({
@@ -53,6 +66,46 @@ async function setCooldown(guildId, userId) {
     guildId,
     userId,
     lastPurchaseTimestamp: now,
+    adminCooldownUntil: existing.adminUntil || 0,
+  });
+}
+
+/**
+ * Admin override: block a user from purchasing for a specific duration.
+ */
+async function setUserCooldownUntil(guildId, userId, durationSeconds) {
+  const key = `${guildId}:${userId}`;
+  const until = Date.now() + durationSeconds * 1000;
+  const existing = cooldownCache.get(key) || { lastPurchase: 0, adminUntil: 0 };
+  existing.adminUntil = until;
+  cooldownCache.set(key, existing);
+
+  const container = getContainer(CONTAINER_USER_COOLDOWNS);
+  await container.items.upsert({
+    id: userId,
+    guildId,
+    userId,
+    lastPurchaseTimestamp: existing.lastPurchase || 0,
+    adminCooldownUntil: until,
+  });
+}
+
+/**
+ * Admin override: remove the admin cooldown from a user.
+ */
+async function clearUserCooldown(guildId, userId) {
+  const key = `${guildId}:${userId}`;
+  const existing = cooldownCache.get(key) || { lastPurchase: 0, adminUntil: 0 };
+  existing.adminUntil = 0;
+  cooldownCache.set(key, existing);
+
+  const container = getContainer(CONTAINER_USER_COOLDOWNS);
+  await container.items.upsert({
+    id: userId,
+    guildId,
+    userId,
+    lastPurchaseTimestamp: existing.lastPurchase || 0,
+    adminCooldownUntil: 0,
   });
 }
 
@@ -80,4 +133,4 @@ async function clearAllCooldowns(guildId) {
   }
 }
 
-module.exports = { checkCooldown, setCooldown, clearAllCooldowns };
+module.exports = { checkCooldown, setCooldown, setUserCooldownUntil, clearUserCooldown, clearAllCooldowns };

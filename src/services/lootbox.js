@@ -19,10 +19,12 @@ function randomInt(min, max) {
  * @returns {object} { outcome: 'WIN_COINS'|'WIN_ROLE'|'LOSS', coins?, roleId?, roleName? }
  */
 async function openBox(guildId, userId, guildConfig, interaction) {
+  // Use admin-configured win chance, fall back to default (0.5)
+  const winChance = guildConfig.winChance ?? WIN_CHANCE;
   const roll = Math.random();
 
   // --- LOSE ---
-  if (roll >= WIN_CHANCE) {
+  if (roll >= winChance) {
     const coinResult = randomInt(guildConfig.lossCoinMin, guildConfig.lossCoinMax); // negative-to-0 range
     if (coinResult !== 0) {
       await modifyBalance(guildId, userId, coinResult);

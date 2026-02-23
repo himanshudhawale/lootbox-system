@@ -10,6 +10,7 @@ const { handlePrize } = require('./commands/lootbox-prize');
 const { handleReset } = require('./commands/lootbox-reset');
 const { handleHelp } = require('./commands/lootbox-help');
 const { handleStock } = require('./commands/stock');
+const { handleStats } = require('./commands/lootbox-stats');
 
 const client = new Client({
   intents: [
@@ -49,6 +50,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await handleHelp(interaction);
       } else if (sub === 'stock') {
         await handleStock(interaction);
+      } else if (sub === 'stats') {
+        await handleStats(interaction);
       } else {
         await interaction.reply({ content: '❓ Unknown subcommand.', flags: MessageFlags.Ephemeral });
       }

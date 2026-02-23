@@ -20,9 +20,12 @@ async function handleHelp(interaction) {
           '`/lootbox config coins-win <min> <max>` — Set win coin range',
           '`/lootbox config coins-lose <min> <max>` — Set loss coin range (negative to 0)',
           '`/lootbox config cooldown <seconds>` — Set per-user cooldown (default 3600s)',
+          '`/lootbox config win-chance <percent>` — Set win percentage (default 50%)',
           '`/lootbox config prize-channel <#channel>` — Set announcement channel',
           '`/lootbox config audit-channel <#channel>` — Set audit log channel',
-          '`/lootbox config purchase-limit <limit>` — Set post-role purchase limit per 24h (0 = unlimited)',
+          '`/lootbox config purchase-limit <limit>` — Set purchase limit per 24h (0 = unlimited)',
+          '`/lootbox config user-cooldown <@user> <hours>` — Block a user from buying',
+          '`/lootbox config user-uncooldown <@user>` — Remove admin cooldown from a user',
           '`/lootbox config show` — Display current configuration',
         ].join('\n'),
       },
@@ -39,6 +42,7 @@ async function handleHelp(interaction) {
         name: '🛠️ Management',
         value: [
           '`/lootbox reset` — Reset all config, prizes, history & cooldowns',
+          '`/lootbox stats` — View server-wide lootbox statistics',
           '`/lootbox help` — Show this help message',
         ].join('\n'),
       },
@@ -57,7 +61,7 @@ async function handleHelp(interaction) {
       {
         name: '🎲 Odds',
         value: [
-          '• **50%** chance to win, **50%** chance to lose',
+          '• Win chance: **admin-configurable** (default 50%)',
           '• On win: **50/50** between coins and role (while roles available)',
           '• On win after roles gone: **100%** coin prize',
           '• On loss: 0 or negative coins (admin-configured range)',

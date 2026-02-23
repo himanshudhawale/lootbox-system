@@ -1,7 +1,8 @@
 const { SlashCommandSubcommandGroupBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { requireManageServer } = require('../utils/permissions');
 const { getGuildConfig, upsertGuildConfig } = require('../db/guildConfig');
-const { COLOUR_INFO } = require('../utils/constants');
+const { setUserCooldownUntil, clearUserCooldown } = require('../services/cooldown');
+const { COLOUR_INFO, WIN_CHANCE } = require('../utils/constants');
 
 /**
  * Build the "config" subcommand group for /lootbox.
@@ -74,6 +75,33 @@ function buildConfigSubcommandGroup() {
             .setDescription('Max boxes per 24h (0 = unlimited)')
             .setRequired(true)
             .setMinValue(0),
+        ),
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName('win-chance')
+        .setDescription('Set the win percentage (default 50%)')
+        .addIntegerOption((opt) =>
+          opt.setName('percent').setDescription('Win chance percentage (1-99)').setRequired(true).setMinValue(1).setMaxValue(99),
+        ),
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName('user-cooldown')
+        .setDescription('Set a cooldown on a specific user (admin punishment)')
+        .addUserOption((opt) =>
+          opt.setName('user').setDescription('The user to put on cooldown').setRequired(true),
+        )
+        .addIntegerOption((opt) =>
+          opt.setName('hours').setDescription('Cooldown duration in hours').setRequired(true).setMinValue(1).setMaxValue(720),
+        ),
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName('user-uncooldown')
+        .setDescription('Remove the admin cooldown from a specific user')
+        .addUserOption((opt) =>
+          opt.setName('user').setDescription('The user to remove cooldown from').setRequired(true),
         ),
     )
     .addSubcommand((sub) =>
@@ -155,6 +183,28 @@ async function handleConfig(interaction) {
       break;
     }
 
+    case 'win-chance': {
+      const percent = interaction.options.getInteger('percent');
+      await upsertGuildConfig(guildId, { winChance: percent / 100 });
+      await interaction.reply({ content: `✅ Win chance set to **${percent}%**.`, flags: MessageFlags.Ephemeral });
+      break;
+    }
+
+    case 'user-cooldown': {
+      const targetUser = interaction.options.getUser('user');
+      const hours = interaction.options.getInteger('hours');
+      await setUserCooldownUntil(guildId, targetUser.id, hours * 3600);
+      await interaction.reply({ content: `✅ <@${targetUser.id}> has been put on cooldown for **${hours} hour${hours !== 1 ? 's' : ''}**.`, flags: MessageFlags.Ephemeral });
+      break;
+    }
+
+    case 'user-uncooldown': {
+      const targetUser = interaction.options.getUser('user');
+      await clearUserCooldown(guildId, targetUser.id);
+      await interaction.reply({ content: `✅ Admin cooldown removed for <@${targetUser.id}>.`, flags: MessageFlags.Ephemeral });
+      break;
+    }
+
     case 'show': {
       const cfg = await getGuildConfig(guildId);
       if (!cfg) {
@@ -173,6 +223,7 @@ async function handleConfig(interaction) {
           { name: 'Audit Channel', value: cfg.auditChannelId ? `<#${cfg.auditChannelId}>` : 'Not set', inline: true },
           { name: 'Max Prize Types', value: cfg.maxPrizeTypes != null ? `${cfg.maxPrizeTypes}` : 'Unlimited', inline: true },
           { name: 'Post-Role Limit', value: cfg.purchaseLimitOverride != null ? `${cfg.purchaseLimitOverride}/24h` : 'Unlimited', inline: true },
+          { name: 'Win Chance', value: `${Math.round((cfg.winChance ?? WIN_CHANCE) * 100)}%`, inline: true },
         )
         .setTimestamp();
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });

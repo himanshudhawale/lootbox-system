@@ -23,6 +23,9 @@ const lootboxCommand = new SlashCommandBuilder()
   )
   .addSubcommand((sub) =>
     sub.setName('stock').setDescription('View lootbox prizes, costs, and remaining stock'),
+  )
+  .addSubcommand((sub) =>
+    sub.setName('stats').setDescription('View server-wide lootbox statistics (admin)'),
   );
 
 // --- /buy (user command) ---

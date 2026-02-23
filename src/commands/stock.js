@@ -65,8 +65,8 @@ async function handleStock(interaction) {
     inline: true,
   });
 
-  // Win odds
-  const winPct = Math.round(WIN_CHANCE * 100);
+  // Win odds — use admin-configured win chance or default
+  const winPct = Math.round((cfg.winChance ?? WIN_CHANCE) * 100);
   const rolePct = Math.round(ROLE_VS_COINS_CHANCE * 100);
   embed.addFields({
     name: '🎲 Odds',
